@@ -7,6 +7,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<PostLike> PostLikes => Set<PostLike>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -30,6 +31,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             post.ToTable("Posts", table => table.HasCheckConstraint(
                 "CK_Posts_Content", "length(trim(Content)) > 0 AND length(Content) <= 250"));
             post.HasOne(p => p.User).WithMany().HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PostLike>(like =>
+        {
+            like.HasIndex(l => new { l.PostId, l.UserId }).IsUnique();
+
+            like.HasOne(l => l.Post).WithMany().HasForeignKey(l => l.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            like.HasOne(l => l.User).WithMany().HasForeignKey(l => l.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
